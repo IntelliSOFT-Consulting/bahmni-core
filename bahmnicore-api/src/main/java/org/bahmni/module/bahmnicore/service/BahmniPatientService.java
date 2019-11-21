@@ -18,4 +18,7 @@ public interface BahmniPatientService {
     public List<Patient> get(String partialIdentifier, boolean shouldMatchExactPatientId);
 
     public List<RelationshipType> getByAIsToB(String aIsToB);
+
+    public List getLOstToFollowUp(String patienId);
+
 }

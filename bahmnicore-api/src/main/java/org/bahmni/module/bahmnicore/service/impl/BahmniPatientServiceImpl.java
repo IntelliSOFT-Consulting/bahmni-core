@@ -93,4 +93,9 @@ public class BahmniPatientServiceImpl implements BahmniPatientService {
         return patientDao.getByAIsToB(aIsToB);
     }
 
+    @Override
+    public List getLOstToFollowUp(String patienId) {
+        return patientDao.getLOstToFollowUp(patienId);
+    }
+
 }

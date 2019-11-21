@@ -1,8 +1,11 @@
 package org.bahmni.module.bahmnicore.web.v1_0.mapper;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.bahmni.module.bahmnicore.model.bahmniPatientProgram.BahmniPatientProgram;
 import org.bahmni.module.bahmnicore.model.bahmniPatientProgram.PatientProgramAttribute;
+import org.bahmni.module.bahmnicore.service.BahmniPatientService;
 import org.openmrs.Concept;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
@@ -13,15 +16,33 @@ import org.openmrs.module.bahmniemrapi.patient.PatientContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigInteger;
 import java.util.List;
 
 @Component
 public class BahmniPatientContextMapper {
+    Log log = LogFactory.getLog(BahmniPatientContextMapper.class);
     @Autowired
     private ConceptService conceptService;
 
+    @Autowired
+    private BahmniPatientService patientService;
+
     public PatientContext map(Patient patient, BahmniPatientProgram patientProgram, List<String> configuredPersonAttributes, List<String> configuredProgramAttributes, List<String> configuredPatientIdentifiers, PatientIdentifierType primaryIdentifierType) {
         PatientContext patientContext = new PatientContext();
+
+        List<Object[]> patientStatuses = patientService.getLOstToFollowUp(patient.getId().toString());
+        log.error("lennnnn" + patientStatuses.size() + " for id " + patient.getId().toString() + "\n\n\n");
+        log.error("\n\n gotten " + patientStatuses.toString());
+        if (patientStatuses.size() > 0) {
+            Object[] objects = patientStatuses.get(0);
+            int days=((BigInteger) objects[0]).intValue();
+            int lostToFollowup =((BigInteger) objects[0]).intValue();
+            patientContext.setDays(days);
+            patientContext.setLostToFollowUp(lostToFollowup == 1);
+        }else {
+            patientContext.setLostToFollowUp(false);
+        }
 
         patientContext.setBirthdate(patient.getBirthdate());
         patientContext.setFamilyName(patient.getFamilyName());

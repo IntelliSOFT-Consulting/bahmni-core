@@ -15,6 +15,8 @@ public class PatientContext {
     private Map<String, Map<String, String>> personAttributes = new HashMap<>();
     private Map<String, Map<String, Object>> programAttributes = new HashMap<>();
     private Map<String, String> additionalPatientIdentifiers = new HashMap<>();
+    private int days = 0;
+    private Boolean lostToFollowUp = null;
 
     public Date getBirthdate() {
         return birthdate;
@@ -112,5 +114,21 @@ public class PatientContext {
 
     public void addAdditionalPatientIdentifier(String type, String value) {
         this.additionalPatientIdentifiers.put(type, value);
+    }
+
+    public int getDays() {
+        return days;
+    }
+
+    public void setDays(int days) {
+        this.days = days;
+    }
+
+    public Boolean getLostToFollowUp() {
+        return lostToFollowUp;
+    }
+
+    public void setLostToFollowUp(Boolean lostToFollowUp) {
+        this.lostToFollowUp = lostToFollowUp;
     }
 }

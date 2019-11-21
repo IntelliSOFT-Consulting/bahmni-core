@@ -1,11 +1,16 @@
 package org.bahmni.module.bahmnicore.dao.impl;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
+import org.bahmni.module.bahmnicore.contract.patient.data.PatientStatus;
 import org.bahmni.module.bahmnicore.contract.patient.mapper.PatientResponseMapper;
 import org.bahmni.module.bahmnicore.contract.patient.response.PatientResponse;
+import org.bahmni.module.bahmnicore.contract.patient.search.PatientDuplicateSearchBuilder;
 import org.bahmni.module.bahmnicore.contract.patient.search.PatientSearchBuilder;
+import org.bahmni.module.bahmnicore.contract.patient.search.PatientStatusBasedSearchBuilder;
 import org.bahmni.module.bahmnicore.dao.PatientDao;
 import org.bahmni.module.bahmnicore.model.bahmniPatientProgram.ProgramAttributeType;
 import org.bahmni.module.bahmnicore.service.BahmniProgramWorkflowService;
@@ -56,7 +61,7 @@ public class PatientDaoImpl implements PatientDao {
                                              String[] patientSearchResultFields, String loginLocationUuid, Boolean filterPatientsByLocation, Boolean filterOnAllIdentifiers) {
 
         validateSearchParams(customAttributeFields, programAttributeFieldName, addressFieldName);
-
+        filterOnAllIdentifiers=true;
         ProgramAttributeType programAttributeType = getProgramAttributeType(programAttributeFieldName);
 
         SQLQuery sqlQuery = new PatientSearchBuilder(sessionFactory)
@@ -108,7 +113,7 @@ public class PatientDaoImpl implements PatientDao {
                 .wildcard().onField("identifierAnywhere").matching("*" + identifier.toLowerCase() + "*").createQuery();
         org.apache.lucene.search.Query nonVoidedIdentifiers = queryBuilder.keyword().onField("voided").matching(false).createQuery();
         org.apache.lucene.search.Query nonVoidedPatients = queryBuilder.keyword().onField("patient.voided").matching(false).createQuery();
-    
+
         List<String> identifierTypeNames = getIdentifierTypeNames(filterOnAllIdentifiers);
 
         BooleanJunction identifierTypeShouldJunction = queryBuilder.bool();
@@ -132,7 +137,7 @@ public class PatientDaoImpl implements PatientDao {
         fullTextQuery.setMaxResults(length);
         return (List<PatientIdentifier>) fullTextQuery.list();
     }
-    
+
     private List<String> getIdentifierTypeNames(Boolean filterOnAllIdentifiers) {
         List<String> identifierTypeNames = new ArrayList<>();
         addIdentifierTypeName(identifierTypeNames,"bahmni.primaryIdentifierType");
@@ -182,6 +187,27 @@ public class PatientDaoImpl implements PatientDao {
         queryToGetAddressFields.setParameterList("personAddressField", Arrays.asList(addressFieldName.toLowerCase()));
         List list = queryToGetAddressFields.list();
         return list.size() > 0;
+    }
+
+    @Override
+    public List getLOstToFollowUp(String patient_id){
+        String query = "select\n" +
+                "    IF(papt.patient_id IS NOT NULL, TIMESTAMPDIFF(DAY,papt.start_date_time,now()), 0) as days,\n" +
+                "    IF(DATEDIFF(papt.start_date_time,now()) >= 29 , true, false) as lost_to_follow_up\n" +
+                "from\n" +
+                "    patient_appointment papt\n" +
+                "    inner join\n" +
+                "    (select p.patient_appointment_id,p.patient_id, max(p.start_date_time) from patient_appointment p where p.patient_id=" +
+                patient_id +
+                "   and p.voided=0 \n" +
+                "   group by p.patient_id ) papt2 on\n" +
+                "    papt.patient_appointment_id = papt2.patient_appointment_id\n"+
+                "   where papt.status='Missed' and papt.voided=0 ";
+
+        Log log = LogFactory.getLog(PatientDaoImpl.class);
+        log.error("AQL Query " + query);
+        Query lostToFollowUp = sessionFactory.getCurrentSession().createSQLQuery(query);
+        return lostToFollowUp.list();
     }
 
     private ProgramAttributeType getProgramAttributeType(String programAttributeField) {
