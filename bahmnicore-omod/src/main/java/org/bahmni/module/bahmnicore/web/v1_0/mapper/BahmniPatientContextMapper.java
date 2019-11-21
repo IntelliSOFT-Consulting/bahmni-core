@@ -37,7 +37,7 @@ public class BahmniPatientContextMapper {
         if (patientStatuses.size() > 0) {
             Object[] objects = patientStatuses.get(0);
             int days=((BigInteger) objects[0]).intValue();
-            int lostToFollowup =((BigInteger) objects[0]).intValue();
+            int lostToFollowup =((BigInteger) objects[1]).intValue();
             patientContext.setDays(days);
             patientContext.setLostToFollowUp(lostToFollowup == 1);
         }else {
