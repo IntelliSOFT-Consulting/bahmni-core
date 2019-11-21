@@ -5,12 +5,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
-import org.bahmni.module.bahmnicore.contract.patient.data.PatientStatus;
 import org.bahmni.module.bahmnicore.contract.patient.mapper.PatientResponseMapper;
 import org.bahmni.module.bahmnicore.contract.patient.response.PatientResponse;
-import org.bahmni.module.bahmnicore.contract.patient.search.PatientDuplicateSearchBuilder;
 import org.bahmni.module.bahmnicore.contract.patient.search.PatientSearchBuilder;
-import org.bahmni.module.bahmnicore.contract.patient.search.PatientStatusBasedSearchBuilder;
 import org.bahmni.module.bahmnicore.dao.PatientDao;
 import org.bahmni.module.bahmnicore.model.bahmniPatientProgram.ProgramAttributeType;
 import org.bahmni.module.bahmnicore.service.BahmniProgramWorkflowService;
@@ -40,7 +37,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static java.util.stream.Collectors.reducing;
 import static java.util.stream.Collectors.toList;
 
 @Repository
@@ -193,7 +189,7 @@ public class PatientDaoImpl implements PatientDao {
     public List getLOstToFollowUp(String patient_id){
         String query = "select\n" +
                 "    IF(papt.patient_id IS NOT NULL, TIMESTAMPDIFF(DAY,papt.start_date_time,now()), 0) as days,\n" +
-                "    IF(DATEDIFF(papt.start_date_time,now()) >= 29 , true, false) as lost_to_follow_up\n" +
+                "    IF(TIMESTAMPDIFF(DAY,papt.start_date_time,now()) >= 29 , true, false) as lost_to_follow_up\n" +
                 "from\n" +
                 "    patient_appointment papt\n" +
                 "    inner join\n" +
